@@ -1,10 +1,6 @@
 # Document Management System Architecture
 
-This project is a Document Management System being built step by step while
-following Corey Schafer's FastAPI tutorial as the technical reference.
-
-The goal is to translate each tutorial concept into this project's domain
-instead of copying the tutorial's blog application directly.
+This project is a Document Management System being built step by step.
 
 ## Current Architecture
 
@@ -78,42 +74,6 @@ Notes:
 
 ## Major Decisions
 
-### Follow the tutorial's progression
-
-The project should stay parallel to the tutorial's learning path. When the
-tutorial introduces a feature, this project should implement the equivalent
-Document Management System feature.
-
-### Translate blog concepts into document concepts
-
-The tutorial uses a blog as its example domain. This project should map those
-ideas into the document management domain.
-
-Current expected mappings:
-
-| Tutorial blog concept | DMS equivalent |
-| --- | --- |
-| Post | Document |
-| Posts list | Documents list |
-| Post title | Document title |
-| Post content | Document description or summary |
-| Author | Owner or uploader |
-| Date posted | Date uploaded or date created |
-| `/posts` | `/documents` |
-| `/api/posts` | `/api/documents` |
-
-### Keep temporary data until the tutorial reaches persistence
-
-The current in-memory list is appropriate for the early tutorial stage. It
-should be replaced by database-backed models only when the tutorial reaches the
-database section.
-
-### Keep the architecture beginner-friendly
-
-The project should not introduce advanced layering, service classes, background
-workers, cloud storage, vector databases, or AI/RAG infrastructure before the
-tutorial has introduced the necessary foundation.
-
 ## Why These Technologies Are Chosen
 
 - **FastAPI**: The main web framework used by the tutorial.
@@ -129,37 +89,6 @@ tutorial has introduced the necessary foundation.
 - **Authentication/JWT**: Planned for login and protected document workflows.
 - **File storage**: Planned for actual uploaded document files.
 - **AI/RAG features**: Planned later, after the core DMS foundation exists.
-
-## Differences From The Tutorial
-
-The tutorial's application is a blog. This project is a Document Management
-System.
-
-The difference should be domain-specific, not architectural:
-
-- Use the same concepts and project progression as the tutorial.
-- Rename and reshape blog features into document management features.
-- Avoid adding unrelated DMS features before the tutorial has introduced the
-  supporting concepts.
-
-Current difference:
-
-- The project goal is DMS-oriented, but the current code still contains blog
-  naming and sample blog posts. This is an early-stage mismatch to fix after
-  approval.
-
-## Important Assumptions And Tradeoffs
-
-- The app is intentionally simple right now because the tutorial is still early.
-- Temporary in-memory data is acceptable until the database section.
-- Routes and templates may still be in one file until the tutorial introduces a
-  reason to split them.
-- The UI can be document-branded before the database and upload features exist.
-- Actual document file uploads should wait until the tutorial reaches forms,
-  request handling, or an equivalent concept.
-- Authentication should wait until the tutorial introduces users/login concepts.
-- AI/RAG features should wait until after the core DMS has users, documents,
-  persistence, and file storage.
 
 ## Implemented
 
@@ -181,8 +110,6 @@ Near-term, aligned with the current tutorial stage:
 - Update the home template to display documents instead of blog posts.
 - Update sidebar labels to DMS concepts.
 
-Later, when the tutorial reaches the matching concepts:
-
 - Add database configuration.
 - Add SQLAlchemy models.
 - Add PostgreSQL support with Psycopg.
@@ -194,14 +121,3 @@ Later, when the tutorial reaches the matching concepts:
 - Add protected routes for user-owned documents.
 - Add AI/RAG features after the document storage foundation is stable.
 
-## Change Workflow
-
-For future tutorial steps:
-
-1. Identify what Corey implemented in the tutorial.
-2. Translate that feature into the Document Management System domain.
-3. List the files that need to change.
-4. Explain why each file needs to change.
-5. Flag tutorial decisions that do not fit this project.
-6. Wait for approval before changing application code.
-7. Keep this architecture document updated as decisions are made.
