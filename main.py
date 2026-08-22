@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -24,7 +24,7 @@ documents: list[dict] = [
         "category": "Engineering",
         "status": "Ready",
         "updated_at": "April 21, 2025",
-    },
+    }, 
     {
         "id": 3,
         "title": "Onboarding Guide",
@@ -37,7 +37,7 @@ documents: list[dict] = [
 
 
 @app.get("/", include_in_schema=False, name="home")
-@app.get("/posts", include_in_schema=False, name="posts")
+@app.get("/docs", include_in_schema=False, name="docs")
 def home(request: Request):
     return templates.TemplateResponse(
         request,
@@ -50,7 +50,29 @@ def home(request: Request):
         },
     )
 
+# CREATE PAGES FOR PARTICULAR DOCUMENT( IN TUTORIAL CREATING PAGES FOR PARTICULAR POST)
+@app.get("/docs/{doc_id}", include_in_schema=False)
+def doc_page(request: Request, doc_id: int):
+    for doc in documents:
+        if doc.get("id") == doc_id:
+            title = doc["title"][:50]
+            return templates.TemplateResponse(
+                request,
+                "doc.html",
+                {"doc": doc, "title": title},
+            )
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="doc not found")
 
-@app.get("/api/posts")
+
+
+@app.get("/api/docs")
 def get_documents():
     return documents
+
+@app.get("/api/docs/{doc_id}")
+def get_doc(doc_id: int):
+    for doc in documents:
+        if doc.get("id") == doc_id:
+            return doc
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="doc not found")
+
