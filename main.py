@@ -5,8 +5,10 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from schemas import DocCreate, DocResponse
+
 app = FastAPI(title="FastDoc")
- 
+
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 templates = Jinja2Templates(directory="templates")
@@ -27,7 +29,7 @@ documents: list[dict] = [
         "category": "Engineering",
         "status": "Ready",
         "updated_at": "April 21, 2025",
-    }, 
+    },
     {
         "id": 3,
         "title": "Onboarding Guide",
@@ -40,7 +42,7 @@ documents: list[dict] = [
 
 
 @app.get("/", include_in_schema=False, name="home")
-@app.get("/docs", include_in_schema=False, name="docs")
+@app.get("/documents", include_in_schema=False, name="documents")
 def home(request: Request):
     return templates.TemplateResponse(
         request,
@@ -53,8 +55,8 @@ def home(request: Request):
         },
     )
 
-# CREATE PAGES FOR PARTICULAR DOCUMENT( IN TUTORIAL CREATING PAGES FOR PARTICULAR POST)
-@app.get("/docs/{doc_id}", include_in_schema=False)
+
+@app.get("/documents/{doc_id}", include_in_schema=False)
 def doc_page(request: Request, doc_id: int):
     for doc in documents:
         if doc.get("id") == doc_id:
@@ -67,18 +69,32 @@ def doc_page(request: Request, doc_id: int):
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="doc not found")
 
 
-
-@app.get("/api/docs")
+@app.get("/api/documents", response_model=list[DocResponse])
 def get_documents():
     return documents
 
-@app.get("/api/docs/{doc_id}")
+
+@app.post("/api/documents", response_model=DocResponse, status_code=status.HTTP_201_CREATED,)
+def create_post(doc: DocCreate):
+    new_id = max(p["id"] for p in documents) + 1 if documents else 1
+    new_doc = {
+        "id": new_id,
+        "title": doc.title,        
+        "description": doc.description,
+        "category": doc.category,
+        "status": doc.status,
+        "updated_at": "April 23, 2025",  # hard-coded for now
+    }
+    documents.append(new_doc)
+    return new_doc
+
+
+@app.get("/api/documents/{doc_id}", response_model=DocResponse)
 def get_doc(doc_id: int):
     for doc in documents:
         if doc.get("id") == doc_id:
             return doc
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="doc not found")
-
 
 
 @app.exception_handler(StarletteHTTPException)
