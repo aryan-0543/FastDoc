@@ -36,7 +36,7 @@
       <div class="action-card content-section h-100 py-3 px-3">
         <span class="action-icon">MG</span>
         <h2 class="h5 mt-3">Manage</h2>
-        <p class="text-body-secondary mb-0">Organize documents by status and category.</p>
+        <p class="text-body-secondary mb-0">Organize documents by file details and folders later.</p>
       </div>
     </div>
   </section>
@@ -57,21 +57,30 @@
             <div>
               <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
                 <h3 class="h5 mb-0">
-                  <a class="document-title" href="{{ url_for ("doc_page", doc_id=document.id) }}">{{ document.title }}</a>
+                  <a class="document-title" href="{{ url_for("doc_page", doc_id=document.id) }}">{{ document.name }}</a>
                 </h3>
-                <span class="badge text-bg-light">{{ document.status }}</span>
               </div>
-              <p class="text-body-secondary mb-2">{{ document.description }}</p>
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <img class="rounded-circle document-owner-img"
+                     src="{{ document.owner.image_path }}"
+                     alt="{{ document.owner.username }}'s profile picture"
+                     width="32"
+                     height="32"
+                     loading="lazy">
+                <a class="document-owner-link"
+                   href="{{ url_for("user_documents", user_id=document.owner.id) }}">{{ document.owner.username }}</a>
+              </div>
               <div class="document-meta">
-                  <span>Category: {{ document.category }}</span>
-                  <span class="ms-4">Updated: {{ document.updated_at }}</span>
+                <span>Created: {{ document.date_created }}</span>
+                <span>Updated: {{ document.date_updated }}</span>
               </div>
-              </div>
-
-              <div class="document-actions d-flex flex-wrap gap-2 align-self-start">
-                  <a class="btn btn-outline-primary btn-sm" href="#">View</a>
-                  <a class="btn btn-outline-secondary btn-sm" href="#">Download</a>
-              </div>
+            </div>
+            <div class="document-actions d-flex flex-wrap gap-2 align-self-start">
+              <a class="btn btn-outline-primary btn-sm"
+                 href="{{ url_for("doc_page", doc_id=document.id) }}">View</a>
+              <a class="btn btn-outline-secondary btn-sm" href="#">Download</a>
+            </div>
+          </div>
         </article>
       {% endfor %}
     </div>
@@ -111,4 +120,3 @@
     </div>
   </section>
 {% endblock content %}
-

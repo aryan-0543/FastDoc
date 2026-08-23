@@ -1,0 +1,65 @@
+{% extends "layout.html" %}
+{% block content %}
+  <section class="content-section py-3 px-4 mb-4">
+    <div class="d-flex align-items-center gap-3">
+      <img class="rounded-circle account-img"
+           src="{{ user.image_path }}"
+           alt="{{ user.username }}'s profile picture"
+           width="96"
+           height="96"
+           loading="lazy">
+      <div>
+        <p class="section-kicker mb-1">User Documents</p>
+        <h1 class="h2 mb-1">{{ user.username }}</h1>
+        <p class="text-body-secondary mb-0">Documents owned by this FastDoc user.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="content-section py-3 px-4 mb-4">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+      <div>
+        <p class="section-kicker mb-1">Library</p>
+        <h2 class="h4 mb-0">{{ user.username }}'s Documents</h2>
+      </div>
+    </div>
+
+    <div class="document-list">
+      {% for document in documents %}
+        <article class="document-item py-3">
+          <div class="d-flex flex-column flex-lg-row gap-3 justify-content-between">
+            <div>
+              <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                <h3 class="h5 mb-0">
+                  <a class="document-title"
+                     href="{{ url_for("doc_page", doc_id=document.id) }}">{{ document.name }}</a>
+                </h3>
+              </div>
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <img class="rounded-circle document-owner-img"
+                     src="{{ document.owner.image_path }}"
+                     alt="{{ document.owner.username }}'s profile picture"
+                     width="32"
+                     height="32"
+                     loading="lazy">
+                <a class="document-owner-link"
+                   href="{{ url_for("user_documents", user_id=document.owner.id) }}">{{ document.owner.username }}</a>
+              </div>
+              <div class="document-meta">
+                <span>Created: {{ document.date_created }}</span>
+                <span>Updated: {{ document.date_updated }}</span>
+              </div>
+            </div>
+            <div class="document-actions d-flex flex-wrap gap-2 align-self-start">
+              <a class="btn btn-outline-primary btn-sm"
+                 href="{{ url_for("doc_page", doc_id=document.id) }}">View</a>
+              <a class="btn btn-outline-secondary btn-sm" href="#">Download</a>
+            </div>
+          </div>
+        </article>
+      {% else %}
+        <p class="text-body-secondary mb-0">No documents by this user yet.</p>
+      {% endfor %}
+    </div>
+  </section>
+{% endblock content %}

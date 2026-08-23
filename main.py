@@ -1,49 +1,51 @@
-from fastapi import FastAPI, HTTPException, Request, status
+import mimetypes
+from pathlib import Path
+from typing import Annotated
+
+from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from schemas import DocCreate, DocResponse
+import models
+from database import Base, engine, get_db
+from schemas import DocResponse, UserCreate, UserResponse
+
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="FastDoc")
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/media", StaticFiles(directory="media"), name="media")
 
 templates = Jinja2Templates(directory="templates")
 
-documents: list[dict] = [
-    {
-        "id": 1,
-        "title": "Product Requirements",
-        "description": "Centralized requirements, notes, and project decisions for the FastDoc product.",
-        "category": "Planning",
-        "status": "Draft",
-        "updated_at": "April 20, 2025",
-    },
-    {
-        "id": 2,
-        "title": "API Reference",
-        "description": "Endpoint notes and backend reference material for future retrieval workflows.",
-        "category": "Engineering",
-        "status": "Ready",
-        "updated_at": "April 21, 2025",
-    },
-    {
-        "id": 3,
-        "title": "Onboarding Guide",
-        "description": "A starter document for helping new team members find important resources.",
-        "category": "Team",
-        "status": "Published",
-        "updated_at": "April 22, 2025",
-    },
-]
+UPLOAD_DIR = Path("uploads")
+UPLOAD_DIR.mkdir(exist_ok=True)
+
+
+def detect_file_type(filename: str, content_type: str | None) -> str:
+    extension = Path(filename).suffix.lower().removeprefix(".")
+    if extension:
+        return extension
+
+    guessed_type = mimetypes.guess_type(filename)[0] or content_type
+    if guessed_type and "/" in guessed_type:
+        subtype = guessed_type.rsplit("/", maxsplit=1)[-1]
+        return "txt" if subtype == "plain" else subtype
+    return "txt"
 
 
 @app.get("/", include_in_schema=False, name="home")
 @app.get("/documents", include_in_schema=False, name="documents")
-def home(request: Request):
+def home(request: Request, db: Annotated[Session, Depends(get_db)]):
+    result = db.execute(select(models.Document))
+    documents = result.scalars().all()
+
     return templates.TemplateResponse(
         request,
         "home.html",
@@ -57,44 +59,201 @@ def home(request: Request):
 
 
 @app.get("/documents/{doc_id}", include_in_schema=False)
-def doc_page(request: Request, doc_id: int):
-    for doc in documents:
-        if doc.get("id") == doc_id:
-            title = doc["title"][:50]
-            return templates.TemplateResponse(
-                request,
-                "doc.html",
-                {"doc": doc, "title": title},
-            )
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="doc not found")
+def doc_page(request: Request, doc_id: int, db: Annotated[Session, Depends(get_db)]):
+    result = db.execute(select(models.Document).where(models.Document.id == doc_id))
+
+    document = result.scalars().first()
+
+    if document:
+        title = document.name[:50]
+
+        return templates.TemplateResponse(
+            request,
+            "doc.html",
+            {
+                "document": document,
+                "title": title,
+            },
+        )
+
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="Document not found",
+    )
 
 
-@app.get("/api/documents", response_model=list[DocResponse])
-def get_documents():
+@app.get(
+    "/users/{user_id}/documents",
+    include_in_schema=False,
+    name="user_documents",
+)
+def user_documents_page(
+    request: Request,
+    user_id: int,
+    db: Annotated[Session, Depends(get_db)],
+):
+    result = db.execute(select(models.User).where(models.User.id == user_id))
+
+    user = result.scalars().first()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+    result = db.execute(
+        select(models.Document).where(models.Document.user_id == user_id)
+    )
+
+    documents = result.scalars().all()
+
+    return templates.TemplateResponse(
+        request,
+        "user_documents.html",
+        {
+            "documents": documents,
+            "user": user,
+            "title": f"{user.username}'s Documents",
+        },
+    )
+
+
+@app.post(
+    "/api/users", response_model=UserResponse, status_code=status.HTTP_201_CREATED
+)
+def create_user(user: UserCreate, db: Annotated[Session, Depends(get_db)]):
+    result = db.execute(
+        select(models.User).where(models.User.username == user.username),
+    )
+    existing_user = result.scalars().first()
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Username already exists",
+        )
+    result = db.execute(
+        select(models.User).where(models.User.email == user.email),
+    )
+    existing_email = result.scalars().first()
+    if existing_email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered",
+        )
+    new_user = models.User(
+        username=user.username,
+        email=user.email,
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
+
+
+@app.get("/api/users/{user_id}", response_model=UserResponse)
+def get_user(user_id: int, db: Annotated[Session, Depends(get_db)]):
+    result = db.execute(
+        select(models.User).where(models.User.id == user_id),
+    )
+    user = result.scalars().first()
+    if user:
+        return user
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+
+@app.get("/api/users/{user_id}/documents", response_model=list[DocResponse])
+def get_user_documents(user_id: int, db: Annotated[Session, Depends(get_db)]):
+    result = db.execute(select(models.User).where(models.User.id == user_id))
+    user = result.scalars().first()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+    result = db.execute(
+        select(models.Document).where(models.Document.user_id == user_id)
+    )
+
+    documents = result.scalars().all()
+
     return documents
 
 
-@app.post("/api/documents", response_model=DocResponse, status_code=status.HTTP_201_CREATED,)
-def create_post(doc: DocCreate):
-    new_id = max(p["id"] for p in documents) + 1 if documents else 1
-    new_doc = {
-        "id": new_id,
-        "title": doc.title,        
-        "description": doc.description,
-        "category": doc.category,
-        "status": doc.status,
-        "updated_at": "April 23, 2025",  # hard-coded for now
-    }
-    documents.append(new_doc)
-    return new_doc
+@app.get("/api/documents", response_model=list[DocResponse])
+def get_documents(db: Annotated[Session, Depends(get_db)]):
+    result = db.execute(select(models.Document))
+    documents = result.scalars().all()
+    return documents
+
+
+@app.post(
+    "/api/documents",
+    response_model=DocResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_document(
+    file: UploadFile = File(...),
+    user_id: int = 1,  # temporary until authentication
+    db: Annotated[Session, Depends(get_db)] = None,
+):
+    result = db.execute(select(models.User).where(models.User.id == user_id))
+
+    user = result.scalars().first()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+    safe_filename = Path(file.filename or "document").name
+
+    file_path = UPLOAD_DIR / safe_filename
+
+    file_size = 0
+
+    with file_path.open("wb") as saved_file:
+        while chunk := file.file.read(1024 * 1024):
+            file_size += len(chunk)
+            saved_file.write(chunk)
+
+    file_type = detect_file_type(
+        safe_filename,
+        file.content_type,
+    )
+
+    new_document = models.Document(
+        name=safe_filename,
+        user_id=user_id,
+        file_path=str(file_path),
+        file_type=file_type,
+        file_size=file_size,
+        folder_id=None,
+    )
+
+    db.add(new_document)
+    db.commit()
+    db.refresh(new_document)
+
+    return new_document
 
 
 @app.get("/api/documents/{doc_id}", response_model=DocResponse)
-def get_doc(doc_id: int):
-    for doc in documents:
-        if doc.get("id") == doc_id:
-            return doc
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="doc not found")
+def get_document(doc_id: int, db: Annotated[Session, Depends(get_db)]):
+    result = db.execute(select(models.Document).where(models.Document.id == doc_id))
+
+    document = result.scalars().first()
+
+    if document:
+        return document
+
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="Document not found",
+    )
 
 
 @app.exception_handler(StarletteHTTPException)

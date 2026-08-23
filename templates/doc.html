@@ -3,15 +3,58 @@
   <article class="content-section py-3 px-4 mb-4">
     <div class="mb-3">
       <p class="section-kicker mb-2">Document Details</p>
-      <h1 class="h2 mb-3">{{ doc.title }}</h1>
-      <p class="lead text-body-secondary mb-0">{{ doc.description }}</p>
+      <h1 class="h2 mb-3">{{ document.name }}</h1>
+      <div class="d-flex align-items-center gap-2 mb-3">
+        <img class="rounded-circle document-owner-img"
+             src="{{ document.owner.image_path }}"
+             alt="{{ document.owner.username }}'s profile picture"
+             width="40"
+             height="40"
+             loading="lazy">
+        <a class="document-owner-link"
+           href="{{ url_for("user_documents", user_id=document.owner.id) }}">{{ document.owner.username }}</a>
+      </div>
+      <p class="lead text-body-secondary mb-0">Full metadata for this FastDoc document.</p>
     </div>
 
-<div class="document-meta d-flex gap-4">
-    <span>Category: {{ doc.category }}</span>
-    <span>Status: {{ doc.status }}</span>
-    <span>Updated: {{ doc.updated_at }}</span>
-</div>
+    <div class="document-list mb-3">
+      <div class="document-item py-3">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <p class="section-kicker mb-1">ID</p>
+            <p class="mb-0">{{ document.id }}</p>
+          </div>
+          <div class="col-md-6">
+            <p class="section-kicker mb-1">Name</p>
+            <p class="mb-0">{{ document.name }}</p>
+          </div>
+          <div class="col-md-6">
+            <p class="section-kicker mb-1">File Type</p>
+            <p class="mb-0">{{ document.file_type }}</p>
+          </div>
+          <div class="col-md-6">
+            <p class="section-kicker mb-1">File Size</p>
+            <p class="mb-0">{{ document.file_size }} bytes</p>
+          </div>
+          <div class="col-md-6">
+            <p class="section-kicker mb-1">Created</p>
+            <p class="mb-0">{{ document.date_created }}</p>
+          </div>
+          <div class="col-md-6">
+            <p class="section-kicker mb-1">Updated</p>
+            <p class="mb-0">{{ document.date_updated }}</p>
+          </div>
+          <div class="col-md-6">
+            <p class="section-kicker mb-1">Folder ID</p>
+            <p class="mb-0">{{ document.folder_id if document.folder_id else "None" }}</p>
+          </div>
+          <div class="col-md-6">
+            <p class="section-kicker mb-1">File Path</p>
+            <p class="mb-0">{{ document.file_path }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
     <!-- TODO: Add document editing after authentication and authorization are introduced. -->
     <div class="document-actions d-flex flex-wrap gap-2 mt-3 pt-3 border-top">
       <a class="btn btn-outline-secondary" href="#">Edit Document</a>

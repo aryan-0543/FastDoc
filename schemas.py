@@ -1,19 +1,52 @@
-from pydantic import BaseModel, ConfigDict, Field
+from datetime import datetime
+from typing import Literal
+
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
+
+
+class UserBase(BaseModel):
+    username: str = Field(min_length=1, max_length=50)
+    email: EmailStr = Field(max_length=120)
+
+
+class UserCreate(UserBase):
+    pass
+
+
+class UserResponse(UserBase):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    image_file: str | None
+    image_path: str
+
 
 
 class DocBase(BaseModel):
-    title: str = Field(min_length=1, max_length=100)
-    description: str = Field(min_length=1)
-    category: str | None = None
-    status: str | None = None
-
-
-class DocCreate(DocBase):
-    pass
+    name: str = Field(min_length=1, max_length=100)
 
 
 class DocResponse(DocBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    updated_at: str
+    user_id: int
+    file_path: str
+    file_type: Literal[
+        "pdf",
+        "doc",
+        "docx",
+        "xls",
+        "xlsx",
+        "txt",
+        "jpg",
+        "jpeg",
+        "png",
+        "gif",
+        "webp",
+    ]
+    file_size: int = Field(gt=0, le=100 * 1024 * 1024)
+    date_created: datetime
+    date_updated: datetime
+    folder_id: int | None = None
+    owner: UserResponse
