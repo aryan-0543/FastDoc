@@ -21,7 +21,7 @@ class User(Base):
         default=None,
     )
 
-    documents: Mapped[list[Document]] = relationship(back_populates="owner")
+    documents: Mapped[list[Document]] = relationship(back_populates="owner",cascade= "all, delete-orphan",)
 
     @property
     def image_path(self) -> str:
