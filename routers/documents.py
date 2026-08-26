@@ -29,9 +29,14 @@ def detect_file_type(filename: str, content_type: str | None) -> str:
         return "txt" if subtype == "plain" else subtype
     return "txt"
 
+
 @router.get("", response_model=list[DocResponse])
 async def get_documents(db: Annotated[AsyncSession, Depends(get_db)]):
-    result = await db.execute(select(models.Document).options(selectinload(models.Document.owner)))
+    result = await db.execute(
+        select(models.Document)
+        .options(selectinload(models.Document.owner))
+        .order_by(models.Document.date_updated.desc())
+    )
     documents = result.scalars().all()
     return documents
 
@@ -83,7 +88,10 @@ async def create_document(
 
     db.add(new_document)
     await db.commit()
-    await db.refresh(new_document,attribute_names=["owner"],)
+    await db.refresh(
+        new_document,
+        attribute_names=["owner"],
+    )
 
     return new_document
 
@@ -91,7 +99,9 @@ async def create_document(
 @router.get("/{doc_id}", response_model=DocResponse)
 async def get_document(doc_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
     result = await db.execute(
-        select(models.Document).options(selectinload(models.Document.owner)).where(models.Document.id == doc_id)
+        select(models.Document)
+        .options(selectinload(models.Document.owner))
+        .where(models.Document.id == doc_id)
     )
 
     document = result.scalars().first()
@@ -127,7 +137,10 @@ async def update_document_metadata(
     document.name = document_data.name
 
     await db.commit()
-    await db.refresh(document,attribute_names=["owner"],)
+    await db.refresh(
+        document,
+        attribute_names=["owner"],
+    )
     return document
 
 
@@ -179,7 +192,10 @@ async def update_document_file(
     document.file_size = file_size
 
     await db.commit()
-    await db.refresh(document,attribute_names=["owner"],)
+    await db.refresh(
+        document,
+        attribute_names=["owner"],
+    )
     return document
 
 
@@ -196,5 +212,5 @@ async def delete_post(doc_id: int, db: Annotated[AsyncSession, Depends(get_db)])
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Document not found",
         )
-    await db.delete(document,attribute_names=["owner"],)
+    await db.delete(document)
     await db.commit()

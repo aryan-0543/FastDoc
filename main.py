@@ -47,7 +47,7 @@ async def home(
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     result = await db.execute(
-        select(models.Document).options(selectinload(models.Document.owner))
+        select(models.Document).options(selectinload(models.Document.owner)).order_by(models.Document.date_updated.desc())
     )
     documents = result.scalars().all()
 
@@ -116,7 +116,7 @@ async def user_documents_page(
     result = await db.execute(
         select(models.Document)
         .options(selectinload(models.Document.owner))
-        .where(models.Document.user_id == user_id)
+        .where(models.Document.user_id == user_id).order_by(models.Document.date_updated.desc())
     )
 
     documents = result.scalars().all()

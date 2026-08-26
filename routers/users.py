@@ -70,7 +70,7 @@ async def get_user_documents(
     result = await db.execute(
         select(models.Document)
         .options(selectinload(models.Document.owner))
-        .where(models.Document.user_id == user_id)
+        .where(models.Document.user_id == user_id).order_by(models.Document.date_updated.desc())
     )
 
     documents = result.scalars().all()
