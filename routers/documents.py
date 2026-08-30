@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 import models
+from auth import CurrentUser, get_current_user
 from database import get_db
 from schemas import DocResponse, DocUpdate
 
@@ -47,19 +48,11 @@ async def get_documents(db: Annotated[AsyncSession, Depends(get_db)]):
     status_code=status.HTTP_201_CREATED,
 )
 async def create_document(
+    current_user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
     file: UploadFile = File(...),
-    user_id: int = 1,  # temporary until authentication
-    db: Annotated[AsyncSession, Depends(get_db)] = None,
 ):
-    result = await db.execute(select(models.User).where(models.User.id == user_id))
-
-    user = result.scalars().first()
-
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
-        )
+    
 
     safe_filename = Path(file.filename or "document").name
 
@@ -79,7 +72,7 @@ async def create_document(
 
     new_document = models.Document(
         name=safe_filename,
-        user_id=user_id,
+        user_id=current_user.id,
         file_path=str(file_path),
         file_type=file_type,
         file_size=file_size,
@@ -122,6 +115,7 @@ async def get_document(doc_id: int, db: Annotated[AsyncSession, Depends(get_db)]
 async def update_document_metadata(
     doc_id: int,
     document_data: DocUpdate,
+    current_user: CurrentUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     result = await db.execute(
@@ -134,6 +128,12 @@ async def update_document_metadata(
             detail="Document not found",
         )
 
+
+    if document.user_id != current_user.id:
+        raise HTTPException(
+            status_code= status.HTTP_403_FORBIDDEN,
+            detail= "Not authorized to update this document"
+        )
     document.name = document_data.name
 
     await db.commit()
@@ -150,6 +150,7 @@ async def update_document_metadata(
 )
 async def update_document_file(
     doc_id: int,
+    current_user: CurrentUser,
     file: UploadFile = File(...),
     db: Annotated[AsyncSession, Depends(get_db)] = None,
 ):
@@ -161,6 +162,12 @@ async def update_document_file(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Document not found",
+        )
+
+    if document.user_id != current_user.id:
+        raise HTTPException(
+            status_code= status.HTTP_403_FORBIDDEN,
+            detail= "Not authorized to update this document"
         )
 
     # Create safe filename
@@ -200,7 +207,10 @@ async def update_document_file(
 
 
 @router.delete("/{doc_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_post(doc_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
+async def delete_post(
+    doc_id: int, 
+    current_user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)]):
     result = await db.execute(
         select(models.Document).where(models.Document.id == doc_id)
     )
@@ -212,5 +222,12 @@ async def delete_post(doc_id: int, db: Annotated[AsyncSession, Depends(get_db)])
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Document not found",
         )
+
+    if document.user_id != current_user.id:
+        raise HTTPException(
+            status_code= status.HTTP_403_FORBIDDEN,
+            detail= "Not authorized to delete this document"
+        )
+    
     await db.delete(document)
     await db.commit()
