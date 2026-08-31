@@ -61,8 +61,17 @@ class DocResponse(DocBase):
         "gif",
         "webp",
     ]
+
     file_size: int = Field(gt=0, le=100 * 1024 * 1024)
     date_created: datetime
     date_updated: datetime
     folder_id: int | None = None
     owner: UserPublic
+
+
+class PaginatedDocmentsResponse(BaseModel):
+    documents: list[DocResponse]
+    total: int
+    skip: int
+    limit: int
+    has_more: bool

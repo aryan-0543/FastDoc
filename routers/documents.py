@@ -2,15 +2,15 @@ import mimetypes
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 import models
 from auth import CurrentUser, get_current_user
 from database import get_db
-from schemas import DocResponse, DocUpdate
+from schemas import DocResponse, DocUpdate, PaginatedDocmentsResponse
 
 router = APIRouter()
 
@@ -31,15 +31,36 @@ def detect_file_type(filename: str, content_type: str | None) -> str:
     return "txt"
 
 
-@router.get("", response_model=list[DocResponse])
-async def get_documents(db: Annotated[AsyncSession, Depends(get_db)]):
+@router.get("", response_model=PaginatedDocmentsResponse)
+async def get_documents(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    skip: Annotated[int, Query(ge=0)] = 0,
+    limit: Annotated[int, Query(ge=1, le=100)] = 10,):
+
+    count_result = await db.execute(select(func.count()).select_from(models.Document))
+    total = count_result.scalar() or 0
+
     result = await db.execute(
         select(models.Document)
         .options(selectinload(models.Document.owner))
         .order_by(models.Document.date_updated.desc())
+        .offset(skip)
+        .limit(limit),
     )
     documents = result.scalars().all()
-    return documents
+
+    has_more = skip + len(documents) < total
+
+    return PaginatedDocmentsResponse(
+        documents=[
+            DocResponse.model_validate(document)
+            for document in documents
+        ],
+        total=total,
+        skip=skip,
+        limit=limit,
+        has_more=has_more,
+    )
 
 
 @router.post(

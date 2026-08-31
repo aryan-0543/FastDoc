@@ -9,12 +9,13 @@ from fastapi.exception_handlers import (
 from fastapi.exceptions import RequestValidationError
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 import models
+from config import settings
 from database import Base, engine, get_db
 from routers import documents, users
 
@@ -42,14 +43,21 @@ app.include_router(documents.router, prefix="/api/documents", tags=["documents"]
 
 @app.get("/", include_in_schema=False, name="home")
 @app.get("/documents", include_in_schema=False, name="documents")
-async def home(
-    request: Request,
-    db: Annotated[AsyncSession, Depends(get_db)],
-):
+async def home(request: Request, db: Annotated[AsyncSession, Depends(get_db)]):
+    count_result = await db.execute(
+        select(func.count()).select_from(models.Document)
+    )
+    total = count_result.scalar() or 0
+
     result = await db.execute(
-        select(models.Document).options(selectinload(models.Document.owner)).order_by(models.Document.date_updated.desc())
+        select(models.Document)
+        .options(selectinload(models.Document.owner))
+        .order_by(models.Document.date_updated.desc())
+        .limit(settings.documents_per_page),
     )
     documents = result.scalars().all()
+
+    has_more = len(documents) < total
 
     return templates.TemplateResponse(
         request,
@@ -59,6 +67,8 @@ async def home(
             "title": "Home",
             "app_name": "FastDoc",
             "tagline": "A simple document management and retrieval system.",
+            "limit": settings.documents_per_page,
+            "has_more": has_more,
         },
     )
 
@@ -116,7 +126,8 @@ async def user_documents_page(
     result = await db.execute(
         select(models.Document)
         .options(selectinload(models.Document.owner))
-        .where(models.Document.user_id == user_id).order_by(models.Document.date_updated.desc())
+        .where(models.Document.user_id == user_id)
+        .order_by(models.Document.date_updated.desc())
     )
 
     documents = result.scalars().all()

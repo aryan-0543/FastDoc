@@ -1,122 +1,239 @@
 {% extends "layout.html" %}
 {% block content %}
-  <section class="hero-section content-section py-4 px-4 mb-4">
-    <p class="section-kicker mb-2">Document Management</p>
-    <h1 class="display-5 fw-semibold mb-3">{{ app_name }}</h1>
-    <p class="lead text-body-secondary mb-4">{{ tagline }}</p>
-    <div class="d-flex flex-wrap gap-2">
-      <a class="btn btn-primary" href="#">Upload Document</a>
-      <a class="btn btn-outline-primary" href="#">Browse Library</a>
-    </div>
-  </section>
+<section class="hero-section content-section py-4 px-4 mb-4">
+  <p class="section-kicker mb-2">Document Management</p>
+  <h1 class="display-5 fw-semibold mb-3">{{ app_name }}</h1>
+  <p class="lead text-body-secondary mb-4">{{ tagline }}</p>
+  <div class="d-flex flex-wrap gap-2">
+    <a class="btn btn-primary" href="#">Upload Document</a>
+    <a class="btn btn-outline-primary" href="#">Browse Library</a>
+  </div>
+</section>
 
-  <section class="row g-3 mb-4" aria-label="FastDoc document actions">
-    <div class="col-sm-6 col-xl-3">
-      <div class="action-card content-section h-100 py-3 px-3">
-        <span class="action-icon">UP</span>
-        <h2 class="h5 mt-3">Upload</h2>
-        <p class="text-body-secondary mb-0">Add document files and metadata later.</p>
-      </div>
+<section class="row g-3 mb-4" aria-label="FastDoc document actions">
+  <div class="col-sm-6 col-xl-3">
+    <div class="action-card content-section h-100 py-3 px-3">
+      <span class="action-icon">UP</span>
+      <h2 class="h5 mt-3">Upload</h2>
+      <p class="text-body-secondary mb-0">Add document files and metadata later.</p>
     </div>
-    <div class="col-sm-6 col-xl-3">
-      <div class="action-card content-section h-100 py-3 px-3">
-        <span class="action-icon">VW</span>
-        <h2 class="h5 mt-3">View</h2>
-        <p class="text-body-secondary mb-0">Review document details in the library.</p>
-      </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="action-card content-section h-100 py-3 px-3">
+      <span class="action-icon">VW</span>
+      <h2 class="h5 mt-3">View</h2>
+      <p class="text-body-secondary mb-0">Review document details in the library.</p>
     </div>
-    <div class="col-sm-6 col-xl-3">
-      <div class="action-card content-section h-100 py-3 px-3">
-        <span class="action-icon">DL</span>
-        <h2 class="h5 mt-3">Download</h2>
-        <p class="text-body-secondary mb-0">Retrieve stored files when downloads exist.</p>
-      </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="action-card content-section h-100 py-3 px-3">
+      <span class="action-icon">DL</span>
+      <h2 class="h5 mt-3">Download</h2>
+      <p class="text-body-secondary mb-0">Retrieve stored files when downloads exist.</p>
     </div>
-    <div class="col-sm-6 col-xl-3">
-      <div class="action-card content-section h-100 py-3 px-3">
-        <span class="action-icon">MG</span>
-        <h2 class="h5 mt-3">Manage</h2>
-        <p class="text-body-secondary mb-0">Organize documents by file details and folders later.</p>
-      </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="action-card content-section h-100 py-3 px-3">
+      <span class="action-icon">MG</span>
+      <h2 class="h5 mt-3">Manage</h2>
+      <p class="text-body-secondary mb-0">Organize documents by file details and folders later.</p>
     </div>
-  </section>
+  </div>
+</section>
 
-  <section class="content-section py-3 px-4 mb-4">
-    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-      <div>
-        <p class="section-kicker mb-1">Library Preview</p>
-        <h2 class="h4 mb-0">Recent Documents</h2>
-      </div>
-      <a class="btn btn-outline-secondary btn-sm" href="#">Manage Library</a>
+<section class="content-section py-3 px-4 mb-4">
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <div>
+      <p class="section-kicker mb-1">Library Preview</p>
+      <h2 class="h4 mb-0">Recent Documents</h2>
     </div>
+    <a class="btn btn-outline-secondary btn-sm" href="#">Manage Library</a>
+  </div>
 
-    <div class="document-list">
+  <div class="document-list">
+    <div id="documentContainer">
       {% for document in documents %}
-        <article class="document-item py-3">
-          <div class="d-flex flex-column flex-lg-row gap-3 justify-content-between">
-            <div>
-              <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
-                <h3 class="h5 mb-0">
-                  <a class="document-title" href="{{ url_for("doc_page", doc_id=document.id) }}">{{ document.name }}</a>
-                </h3>
-              </div>
-              <div class="d-flex align-items-center gap-2 mb-2">
-                <img class="rounded-circle document-owner-img"
-                     src="{{ document.owner.image_path }}"
-                     alt="{{ document.owner.username }}'s profile picture"
-                     width="32"
-                     height="32"
-                     loading="lazy">
-                <a class="document-owner-link"
-                   href="{{ url_for("user_documents", user_id=document.owner.id) }}">{{ document.owner.username }}</a>
-              </div>
-              <div class="document-meta">
-                <span>Created: {{ document.date_created }}</span>
-                <span>Updated: {{ document.date_updated }}</span>
-              </div>
+      <article class="document-item py-3">
+        <div class="d-flex flex-column flex-lg-row gap-3 justify-content-between">
+          <div>
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+              <h3 class="h5 mb-0">
+                <a class="document-title" href="{{ url_for("doc_page", doc_id=document.id) }}">{{ document.name }}</a>
+              </h3>
             </div>
-            <div class="document-actions d-flex flex-wrap gap-2 align-self-start">
-              <a class="btn btn-outline-primary btn-sm"
-                 href="{{ url_for("doc_page", doc_id=document.id) }}">View</a>
-              <a class="btn btn-outline-secondary btn-sm" href="#">Download</a>
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <img class="rounded-circle document-owner-img" src="{{ document.owner.image_path }}"
+                alt="{{ document.owner.username }}'s profile picture" width="32" height="32" loading="lazy">
+              <a class="document-owner-link" href="{{ url_for("user_documents", user_id=document.owner.id) }}">{{
+                document.owner.username }}</a>
+            </div>
+            <div class="document-meta">
+              <span>Created: {{ document.date_created }}</span>
+              <span>Updated: {{ document.date_updated }}</span>
             </div>
           </div>
-        </article>
+          <div class="document-actions d-flex flex-wrap gap-2 align-self-start">
+            <a class="btn btn-outline-primary btn-sm" href="{{ url_for("doc_page", doc_id=document.id) }}">View</a>
+            <a class="btn btn-outline-secondary btn-sm" href="#">Download</a>
+          </div>
+        </div>
+      </article>
       {% endfor %}
     </div>
-  </section>
+  </div>
 
-  <section class="content-section py-3 px-4 mb-4">
-    <p class="section-kicker mb-1">Coming Next</p>
-    <h2 class="h4 mb-3">Planned Workflow</h2>
-    <div class="row g-3">
-      <div class="col-md-4">
-        <div class="workflow-step">
-          <span class="workflow-number">1</span>
-          <div>
-            <h3 class="h6 mb-1">Store documents</h3>
-            <p class="text-body-secondary mb-0">Upload files after the tutorial reaches forms and file handling.</p>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-4">
-        <div class="workflow-step">
-          <span class="workflow-number">2</span>
-          <div>
-            <h3 class="h6 mb-1">Protect access</h3>
-            <p class="text-body-secondary mb-0">Connect documents to users when authentication is introduced.</p>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-4">
-        <div class="workflow-step">
-          <span class="workflow-number">3</span>
-          <div>
-            <h3 class="h6 mb-1">Retrieve knowledge</h3>
-            <p class="text-body-secondary mb-0">Add search and retrieval features after the core app is stable.</p>
-          </div>
+  {% if has_more %}
+  <div class="text-center mt-3">
+    <button type="button" class="btn btn-outline-primary" id="loadMoreBtn">
+      Load More Documents
+    </button>
+  </div>
+  {% endif %}
+</section>
+
+<section class="content-section py-3 px-4 mb-4">
+  <p class="section-kicker mb-1">Coming Next</p>
+  <h2 class="h4 mb-3">Planned Workflow</h2>
+  <div class="row g-3">
+    <div class="col-md-4">
+      <div class="workflow-step">
+        <span class="workflow-number">1</span>
+        <div>
+          <h3 class="h6 mb-1">Store documents</h3>
+          <p class="text-body-secondary mb-0">Upload files after the tutorial reaches forms and file handling.</p>
         </div>
       </div>
     </div>
-  </section>
+    <div class="col-md-4">
+      <div class="workflow-step">
+        <span class="workflow-number">2</span>
+        <div>
+          <h3 class="h6 mb-1">Protect access</h3>
+          <p class="text-body-secondary mb-0">Connect documents to users when authentication is introduced.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="workflow-step">
+        <span class="workflow-number">3</span>
+        <div>
+          <h3 class="h6 mb-1">Retrieve knowledge</h3>
+          <p class="text-body-secondary mb-0">Add search and retrieval features after the core app is stable.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 {% endblock content %}
+
+{% block scripts %}
+<script type="module">
+  import { escapeHtml, formatDate } from '/static/js/utils.js?v=2';
+
+  // Pagination state - initialized from server-rendered values
+  let currentOffset = {{ limit }};  // Start after server-rendered documents
+  const limit = {{ limit }};
+  let hasMore = {{ 'true' if has_more else 'false' }};
+
+  const documentContainer = document.getElementById('documentContainer');
+  const loadMoreBtn = document.getElementById('loadMoreBtn');
+
+  // Create HTML for a single document (matching server-rendered structure)
+  function createDocumentHTML(document) {
+    return `
+    <article class="document-item py-3">
+      <div class="d-flex flex-column flex-lg-row gap-3 justify-content-between">
+        <div>
+          <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+            <h3 class="h5 mb-0">
+              <a class="document-title" href="/documents/${document.id}">
+                ${escapeHtml(document.name)}
+              </a>
+            </h3>
+          </div>
+
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <img class="rounded-circle document-owner-img"
+                 src="${escapeHtml(document.owner.image_path)}"
+                 alt="${escapeHtml(document.owner.username)}'s profile picture"
+                 width="32"
+                 height="32"
+                 loading="lazy">
+
+            <a class="document-owner-link"
+               href="/users/${document.owner.id}/documents">
+              ${escapeHtml(document.owner.username)}
+            </a>
+          </div>
+
+          <div class="document-meta">
+            <span>Created: ${formatDate(document.date_created)}</span>
+            <span>Updated: ${formatDate(document.date_updated)}</span>
+          </div>
+        </div>
+
+        <div class="document-actions d-flex flex-wrap gap-2 align-self-start">
+          <a class="btn btn-outline-primary btn-sm"
+             href="/documents/${document.id}">
+            View
+          </a>
+          <a class="btn btn-outline-secondary btn-sm" href="#">
+            Download
+          </a>
+        </div>
+      </div>
+    </article>
+  `;
+  }
+  // Load more documents from the API
+  async function loadMoreDocuments() {
+    // Disable button and show loading state
+    loadMoreBtn.disabled = true;
+    loadMoreBtn.textContent = 'Loading...';
+
+    let errorOccurred = false;
+
+    try {
+      const response = await fetch(`/api/documents?skip=${currentOffset}&limit=${limit}`);
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch documents');
+      }
+
+      const data = await response.json();
+
+      // Append new documents to the container
+      for (const document of data.documents) {
+        documentContainer.insertAdjacentHTML('beforeend', createDocumentHTML(document));
+      }
+
+      // Update pagination state
+      currentOffset += data.documents.length;
+      hasMore = data.has_more;
+
+      // Hide button if no more documents
+      if (!hasMore) {
+        loadMoreBtn.classList.add('d-none');
+      }
+    } catch (error) {
+      errorOccurred = true;
+      console.error('Error loading documents:', error);
+      // Show error message and keep button enabled for retry
+      loadMoreBtn.textContent = 'Error - Click to Retry';
+      loadMoreBtn.disabled = false;
+    } finally {
+      // Re-enable button and reset text only if no error occurred
+      if (!errorOccurred && hasMore) {
+        loadMoreBtn.disabled = false;
+        loadMoreBtn.textContent = 'Load More Documents';
+      }
+    }
+  }
+
+  // Add click handler if button exists
+  if (loadMoreBtn) {
+    loadMoreBtn.addEventListener('click', loadMoreDocuments);
+  }
+</script>
+{% endblock scripts %}

@@ -2,5 +2,7 @@
 __pycache__/
 *.pyc
 .env
-FastDoc.db
+fastdoc.db
 .DS_Store
+uploads/
+populate_documents
