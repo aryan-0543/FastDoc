@@ -53,7 +53,7 @@ async def create_user(user: UserCreate, db: Annotated[AsyncSession, Depends(get_
     return new_user
 
 ## verify_access_token
-def verify_access_token(token: str) -> str | None:  # noqa: F811
+def verify_access_token(token: str) -> str | None:  
     """Verify a JWT access token and return the subject (user id) if valid."""
     try:
         payload = jwt.decode(
