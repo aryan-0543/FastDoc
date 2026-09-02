@@ -17,8 +17,15 @@ POPULATE_DIR = Path("populate_documents")
 
 async def clear_database():
     async with AsyncSessionLocal() as db:
+        # Delete password reset tokens first because they reference users
+        await db.execute(delete(models.PasswordResetToken))
+
+        # Delete documents before users because documents reference users
         await db.execute(delete(models.Document))
+
+        # Delete users
         await db.execute(delete(models.User))
+
         await db.commit()
 
     print("Database cleared.")
