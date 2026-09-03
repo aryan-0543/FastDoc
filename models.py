@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database import Base
@@ -61,6 +61,12 @@ class Document(Base):
         ForeignKey("users.id"),
         nullable=False,
         index=True,
+    )
+    is_public: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        server_default="false",
+        nullable=False,
     )
 
     owner: Mapped[User] = relationship(back_populates="documents")
