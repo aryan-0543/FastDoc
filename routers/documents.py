@@ -35,7 +35,8 @@ def detect_file_type(filename: str, content_type: str | None) -> str:
 async def get_documents(
     db: Annotated[AsyncSession, Depends(get_db)],
     skip: Annotated[int, Query(ge=0)] = 0,
-    limit: Annotated[int, Query(ge=1, le=100)] = 10,):
+    limit: Annotated[int, Query(ge=1, le=100)] = 10,
+):
 
     count_result = await db.execute(select(func.count()).select_from(models.Document))
     total = count_result.scalar() or 0
@@ -52,10 +53,7 @@ async def get_documents(
     has_more = skip + len(documents) < total
 
     return PaginatedDocmentsResponse(
-        documents=[
-            DocResponse.model_validate(document)
-            for document in documents
-        ],
+        documents=[DocResponse.model_validate(document) for document in documents],
         total=total,
         skip=skip,
         limit=limit,
@@ -73,7 +71,6 @@ async def create_document(
     db: Annotated[AsyncSession, Depends(get_db)],
     file: UploadFile = File(...),
 ):
-    
 
     safe_filename = Path(file.filename or "document").name
 
@@ -149,11 +146,10 @@ async def update_document_metadata(
             detail="Document not found",
         )
 
-
     if document.user_id != current_user.id:
         raise HTTPException(
-            status_code= status.HTTP_403_FORBIDDEN,
-            detail= "Not authorized to update this document"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to update this document",
         )
     document.name = document_data.name
 
@@ -187,8 +183,8 @@ async def update_document_file(
 
     if document.user_id != current_user.id:
         raise HTTPException(
-            status_code= status.HTTP_403_FORBIDDEN,
-            detail= "Not authorized to update this document"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to update this document",
         )
 
     # Create safe filename
@@ -229,9 +225,8 @@ async def update_document_file(
 
 @router.delete("/{doc_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_post(
-    doc_id: int, 
-    current_user: CurrentUser,
-    db: Annotated[AsyncSession, Depends(get_db)]):
+    doc_id: int, current_user: CurrentUser, db: Annotated[AsyncSession, Depends(get_db)]
+):
     result = await db.execute(
         select(models.Document).where(models.Document.id == doc_id)
     )
@@ -246,9 +241,9 @@ async def delete_post(
 
     if document.user_id != current_user.id:
         raise HTTPException(
-            status_code= status.HTTP_403_FORBIDDEN,
-            detail= "Not authorized to delete this document"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to delete this document",
         )
-    
+
     await db.delete(document)
     await db.commit()
