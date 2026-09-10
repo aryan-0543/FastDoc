@@ -595,33 +595,3 @@ CurrentUser
         └── Inject authenticated user
            into protected endpoints
 ```
-
-The overall request flow is:
-
-```text
-Register
-   ↓
-Hash Password
-   ↓
-Store User
-   ↓
-Login
-   ↓
-Verify Password
-   ↓
-Generate JWT
-   ↓
-Client receives JWT
-   ↓
-Authorization: Bearer <JWT>
-   ↓
-FastAPI extracts token
-   ↓
-JWT is verified
-   ↓
-User ID is extracted
-   ↓
-User is retrieved from PostgreSQL
-   ↓
-Protected endpoint executes
-```
