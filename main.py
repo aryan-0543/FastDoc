@@ -26,7 +26,6 @@ async def lifespan(_app: FastAPI):
     # Shutdown
     await engine.dispose()
 
-
 app = FastAPI(lifespan=lifespan, title="FastDoc")
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
